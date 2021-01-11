@@ -186,7 +186,7 @@ class KMeansClusterer
     start_time = Time.now
     @iterations, @runtime = 0, 0
     @cluster_assigns = NArray.int(@points_count)
-    min_distances = NArray.new(@typecode, @points_count)
+    min_distances = NArray.new(@points_count, @typecode)
 
     loop do
       @iterations +=1
