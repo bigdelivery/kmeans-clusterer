@@ -202,7 +202,8 @@ class KMeansClusterer
           dist = NArray.ref @distances[true, cluster_id].flatten
           mask = dist < min_distances
           cluster_size = 0
-          @data_sizes[mask].each.with_index do |w, i|
+          @data_sizes.each.with_index do |w, i|
+            next if mask[i] == 0
             if w + cluster_size <= @k_constraints[cluster_id]
               cluster_size += w
             else
