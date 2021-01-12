@@ -196,8 +196,7 @@ class KMeansClusterer
       
       assigned_points = NArray.int(@points_count)
       assignment_step_iter = 0
-      while assigned_points.sum != @points_count &&
-            assignment_step_iter < @points_count
+      while assignment_step_iter < @points_count
         @k.times do |cluster_id|
           dist = NArray.ref @distances[true, cluster_id].flatten
           mask = dist < min_distances
