@@ -10,4 +10,5 @@ Gem::Specification.new do |s|
   s.homepage    = 'https://github.com/gbuesing/kmeans-clusterer'
   s.license     = 'MIT'
   s.add_runtime_dependency 'narray', '~> 0.6'
+  s.add_runtime_dependency 'numo-narray', '~> 0.9.1.8'
 end
