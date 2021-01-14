@@ -1,5 +1,4 @@
 require 'narray'
-require 'numo/narray'
 
 class KMeansClusterer
   TYPECODE = { double: NArray::DFLOAT, single: NArray::SFLOAT }
@@ -199,7 +198,7 @@ class KMeansClusterer
         cluster_sizes = NArray.int(@k)
         @points_count.times do |point_id|
           cluster_point_distances = NArray.ref @distances[point_id, true].flatten
-          sorted_point_dist_index = Numo::NArray[*cluster_point_distances.to_a].sort_index
+          sorted_point_dist_index = cluster_point_distances.sort_index
           sorted_point_dist_index.each do |cluster_id|
             if @data_sizes[point_id] + cluster_sizes[cluster_id] <= @k_constraints[cluster_id]
               cluster_sizes[cluster_id] += @data_sizes[point_id]
