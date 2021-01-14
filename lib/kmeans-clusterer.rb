@@ -186,7 +186,6 @@ class KMeansClusterer
     start_time = Time.now
     @iterations, @runtime = 0, 0
     @cluster_assigns = NArray.int(@points_count)
-    @cluster_assigns.fill!(-1)
     min_distances = NArray.new(@typecode, @points_count)
 
     loop do
@@ -195,25 +194,26 @@ class KMeansClusterer
       min_distances.fill! Float::INFINITY
       @distances = Distance.euclidean(@centroids, @data, @row_norms)
       
-      assigned_points = NArray.int(@points_count)
-      assignment_step_iter = 0
-      while assignment_step_iter < @points_count
+      if @size_constrained
+        cluster_sizes = NArray.int(@k)
+        @points_count.times do |point_id|
+          cluster_point_distances = NArray.ref @distances[point_id, true].flatten
+          sorted_point_dist_index = cluster_point_distances.sort_index
+          sorted_point_dist_index.each do |cluster_id|
+            if @data_sizes[point_id] + cluster_sizes[cluster_id] <= @k_constraints[cluster_id]
+              cluster_sizes[cluster_id] += @data_sizes[point_id]
+              @cluster_assigns[point_id] = cluster_id
+              break
+            end
+          end
+        end
+      else
         @k.times do |cluster_id|
           dist = NArray.ref @distances[true, cluster_id].flatten
-          mask = dist < min_distances
-          cluster_size = 0
-          @data_sizes[mask].each.with_index do |w, i|
-            if w + cluster_size <= @k_constraints[cluster_id]
-              cluster_size += w
-            else
-              mask[i] = 0
-            end
-          end if @size_constrained
+          mask = dist < min_distances 
           @cluster_assigns[mask] = cluster_id
-          assigned_points[mask] = 1
           min_distances[mask] = dist[mask]
         end
-        assignment_step_iter += 1
       end
 
       max_move = 0
