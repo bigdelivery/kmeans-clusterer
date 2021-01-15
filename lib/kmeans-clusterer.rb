@@ -171,7 +171,7 @@ class KMeansClusterer
 
     @data = opts[:data]
     @data_sizes = opts[:data_sizes]
-    @data_sizes = NArray.cast(@data_sizes) unless @data_sizes.is_a?(NArray)
+    @data_sizes = NArray.cast(@data_sizes) unless @data_sizes.nil? || @data_sizes.is_a?(NArray)
     @points_count = @data ? @data.shape[1] : 0
     @mean = Utils.ensure_narray(opts[:mean]) if opts[:mean]
     @std = Utils.ensure_narray(opts[:std]) if opts[:std]
