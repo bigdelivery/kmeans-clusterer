@@ -127,6 +127,7 @@ class KMeansClusterer
     opts[:k] = k
     typecode = TYPECODE[opts[:float_precision]]
 
+    data_sizes = data.map { |d| d.pop } if k.is_a?(Array)
     data = Utils.ensure_matrix data, typecode
 
     if opts[:scale_data]
@@ -136,6 +137,7 @@ class KMeansClusterer
     end
 
     opts[:data] = data
+    opts[:data_sizes] = data_sizes
     opts[:row_norms] = Scaler.row_norms(data)
 
     bestrun = nil
@@ -160,12 +162,16 @@ class KMeansClusterer
 
 
   def initialize opts = {}
-    @k = opts[:k]
+    @size_constrained = opts[:k].is_a?(Array)
+    @k = @size_constrained ? opts[:k].size : opts[:k]
+    @k_constraints = opts[:k] if @size_constrained
     @init = opts[:init]
     @labels = opts[:labels] || []
     @row_norms = opts[:row_norms]
 
     @data = opts[:data]
+    @data_sizes = opts[:data_sizes]
+    @data_sizes = NArray.cast(@data_sizes) unless @data_sizes.nil? || @data_sizes.is_a?(NArray)
     @points_count = @data ? @data.shape[1] : 0
     @mean = Utils.ensure_narray(opts[:mean]) if opts[:mean]
     @std = Utils.ensure_narray(opts[:std]) if opts[:std]
@@ -187,12 +193,27 @@ class KMeansClusterer
 
       min_distances.fill! Float::INFINITY
       @distances = Distance.euclidean(@centroids, @data, @row_norms)
-
-      @k.times do |cluster_id|
-        dist = NArray.ref @distances[true, cluster_id].flatten
-        mask = dist < min_distances
-        @cluster_assigns[mask] = cluster_id
-        min_distances[mask] = dist[mask]
+      
+      if @size_constrained
+        cluster_sizes = NArray.int(@k)
+        @points_count.times do |point_id|
+          cluster_point_distances = NArray.ref @distances[point_id, true].flatten
+          sorted_point_dist_index = cluster_point_distances.sort_index
+          sorted_point_dist_index.each do |cluster_id|
+            if @data_sizes[point_id] + cluster_sizes[cluster_id] <= @k_constraints[cluster_id]
+              cluster_sizes[cluster_id] += @data_sizes[point_id]
+              @cluster_assigns[point_id] = cluster_id
+              break
+            end
+          end
+        end
+      else
+        @k.times do |cluster_id|
+          dist = NArray.ref @distances[true, cluster_id].flatten
+          mask = dist < min_distances 
+          @cluster_assigns[mask] = cluster_id
+          min_distances[mask] = dist[mask]
+        end
       end
 
       max_move = 0
