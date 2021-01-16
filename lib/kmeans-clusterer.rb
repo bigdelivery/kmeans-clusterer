@@ -195,6 +195,7 @@ class KMeansClusterer
       @distances = Distance.euclidean(@centroids, @data, @row_norms)
       
       if @size_constrained
+        # bluft
         cluster_sizes = NArray.int(@k)
         @points_count.times do |point_id|
           cluster_point_distances = NArray.ref @distances[point_id, true].flatten
